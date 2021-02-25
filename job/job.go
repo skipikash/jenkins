@@ -1,17 +1,29 @@
 package job
 
-import "github.com/skipikash/jenkins"
+import "github.com/skipikash/jenkins/jenkins"
 
-
-func Info(c jenkins.Requester, url string) {
-	
+// GetInfo returns information about a job. 
+// Note: To return information for a specific job run use GetRunInfo()
+func GetInfo(r jenkins.Requester, jobURL string) {
+	url := jobURL + "/api/json"
+	err := jenkins.RequestJSON(r, "GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	return
 }
 
-func RunInfo(c jenkins.Requester, url string) {
-
+// GetRunInfo asdf
+func GetRunInfo(c jenkins.Requester, jobRunURL string) {
+	return
 }
 
-func Config(c jenkins.Requester, url string) {
-
+// GetConfig asdf
+func GetConfig(c jenkins.Requester, jobURL string) {
+	return
 }
 
+// Start asdf
+func Start(c jenkins.Requester, params Parameters, jobURL string) {
+	return
+}
