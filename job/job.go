@@ -3,13 +3,14 @@ package job
 import (
 	"fmt"
 
-	"github.com/skipikash/jenkins/jenkins"
+	"github.com/skipikash/jenkins"
 )
 
 var (
-	apiJSON   = "%s/api/json"
-	configXML = "%s/config.xml"
-	apiBuild  = "%s/build"
+	apiJSON      = "%s/api/json"
+	configXML    = "%s/config.xml"
+	apiBuild     = "%s/build"
+	apiPassInput = "%s/Input"
 )
 
 // GetInfo returns information about a job.
@@ -41,7 +42,7 @@ func GetConfig(r jenkins.Requester, jobURL string, configStruct interface{}) err
 	return jenkins.RequestXML(r, "GET", url, nil, configStruct)
 }
 
-// Start starts a job
+// Start starts a job and returns the run URL
 func Start(r jenkins.Requester, params Parameters, jobURL string) (string, error) {
 	url := fmt.Sprintf(apiBuild, jobURL)
 	err := jenkins.RequestJSON(r, "POST", url, params.GetPostBody(), params)
@@ -52,3 +53,19 @@ func Start(r jenkins.Requester, params Parameters, jobURL string) (string, error
 	// TODO: get jobURL from queue
 	return jobRunURL, err
 }
+
+
+// IsRequestingInput checks to see if a running job is requesting input
+func IsRequestingInput(r jenkins.Requester, jobRunURL string) bool {
+	// check to see if job is pendingInput
+	// if so, post input
+	return false
+}
+
+
+// PassInput passes input to a running job waiting for input
+func PassInput(r jenkins.Requester, jobRunURL string, input []byte) error {
+	// post input
+	return nil
+}
+
