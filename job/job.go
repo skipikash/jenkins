@@ -82,26 +82,32 @@ func Start(r jenkins.Requester, params Parameters, jobURL string) (string, error
 	return jobRunURL, err
 }
 
-// IsRequestingInput checks to see if a running job is requesting input
-func IsRequestingInput(r jenkins.Requester, jobRunURL string) bool {
-	// check to see if job is pendingInput
-	url := fmt.Sprintf(apiPendingInputActions, jobRunURL)
-	inputActions := PendingInputActions{}
-	err := jenkins.RequestJSON(r, "GET", url, nil, &inputActions)
-	if err != nil {
-		return false
-	}
-	return len(inputActions) > 0
-}
-
-// PassProceedInput passes input to a running job waiting for input
-func PassProceedInput(r jenkins.Requester, params Parameters, jobRunURL string) error {
-	// check to see if job is pendingInput
+// GetInputRequest gets input requests when job is pending input
+func GetInputRequest(r jenkins.Requester, jobRunURL string) (PendingInputActions, error) {
 	url := fmt.Sprintf(apiPendingInputActions, jobRunURL)
 	inputActions := PendingInputActions{}
 	err := jenkins.RequestJSON(r, "GET", url, nil, &inputActions)
 	if err != nil || len(inputActions) == 0 {
-		return fmt.Errorf("Job is not waiting for input")
+		return inputActions, fmt.Errorf("Job is not waiting for input")
+	}
+	return inputActions, nil
+}
+
+// IsRequestingInput checks to see if a running job is requesting input
+func IsRequestingInput(r jenkins.Requester, jobRunURL string) bool {
+	if inputActions, err := GetInputRequest(r, jobRunURL); err != nil {
+		return false
+	} else {
+		return len(inputActions) > 0
+	}
+}
+
+// PassProceedInput passes input to a running job waiting for input
+func PassProceedInput(r jenkins.Requester, params Parameters, jobRunURL string) error {
+
+	inputActions, err := GetInputRequest(r, jobRunURL)
+	if err != nil {
+		return err
 	}
 
 	// populate url
@@ -112,8 +118,8 @@ func PassProceedInput(r jenkins.Requester, params Parameters, jobRunURL string) 
 		jsonInput = params.GetURLEncodedJSON()
 	}
 
-	// send request
-	url = fmt.Sprintf(apiSubmitInput, jobRunURL, inputID, proceedText, jsonInput)
+	// send input
+	url := fmt.Sprintf(apiSubmitInput, jobRunURL, inputID, proceedText, jsonInput)
 	resp, err := r.Request("POST", url, nil)
 	if err != nil {
 		return err

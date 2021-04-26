@@ -98,6 +98,17 @@ func TestStart(t *testing.T) {
 	}
 }
 
+func TestGetInputRequest(t *testing.T) {
+	r := mock.Client
+	inputActions, err := job.GetInputRequest(r, mock.TestPendingInputJobURL)
+	if err != nil {
+		t.Error(err)
+	}
+	if inputActions[0].Message != "Do you want to proceed?" {
+		t.Fail()
+	}
+}
+
 func TestIsRequestingInput(t *testing.T) {
 	r := mock.Client
 	isRequesting := job.IsRequestingInput(r, mock.TestPendingInputJobURL)

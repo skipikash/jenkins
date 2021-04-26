@@ -13,7 +13,9 @@ func Job(r jenkins.Requester, jobRunURL string, interval time.Duration) (string,
 }
 
 // JobWithInput checks a jenkins job every interval until it completes and passes input to a job if it is requesting input
-func JobWithInput(r jenkins.Requester, interval time.Duration, params job.Parameters, jobRunURL string) (string, error) {
+// Note: If your jenkins pipeline requests input multiple times throughout a given run or you need to perform more extra
+// logic for determining what input to pass to the job use a custom function and JobWithFunc
+func JobWithInput(r jenkins.Requester, jobRunURL string, interval time.Duration, params job.Parameters) (string, error) {
 	return JobWithFunc(r, jobRunURL, interval, func() error {
 		if job.IsRequestingInput(r, jobRunURL) {
 			return job.PassProceedInput(r, params, jobRunURL)
@@ -32,9 +34,11 @@ func JobWithFunc(r jenkins.Requester, jobRunURL string, interval time.Duration, 
 			return "", err
 		}
 		jobStatus = info.Result
-		err = f()
-		if err != nil {
-			return jobStatus, err
+
+		if f != nil {
+			if err = f(); err != nil {
+				return jobStatus, err
+			}
 		}
 	}
 	return jobStatus, nil
