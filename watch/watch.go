@@ -13,16 +13,18 @@ func Job(r jenkins.Requester, jobRunURL string, interval time.Duration) (string,
 }
 
 // JobWithInput checks a jenkins job every interval until it completes and passes input to a job if it is requesting input
-func JobWithInput(r jenkins.Requester, jobRunURL string, interval time.Duration, input []byte) (string, error) {
-	return JobWithFunc(r, jobRunURL, interval, func(){
+func JobWithInput(r jenkins.Requester, interval time.Duration, params job.Parameters, jobRunURL string) (string, error) {
+	return JobWithFunc(r, jobRunURL, interval, func() error {
 		if job.IsRequestingInput(r, jobRunURL) {
-			job.PassInput(r, jobRunURL, input)
+			return job.PassProceedInput(r, params, jobRunURL)
 		}
+		return nil
 	})
 }
 
-// JobWithFunc checks a jenkins job every interval and runs f every interval until the job completes
-func JobWithFunc(r jenkins.Requester, jobRunURL string, interval time.Duration, f func()) (string, error) {
+// JobWithFunc checks a jenkins job every interval and runs f every interval until the job completes.
+// returns status and err
+func JobWithFunc(r jenkins.Requester, jobRunURL string, interval time.Duration, f func() error) (string, error) {
 	jobStatus := "RUNNING"
 	for running := true; running; running = (jobStatus == "RUNNING") {
 		info, err := job.GetRunInfo(r, jobRunURL)
@@ -30,7 +32,10 @@ func JobWithFunc(r jenkins.Requester, jobRunURL string, interval time.Duration, 
 			return "", err
 		}
 		jobStatus = info.Result
-		f()
+		err = f()
+		if err != nil {
+			return jobStatus, err
+		}
 	}
 	return jobStatus, nil
 }

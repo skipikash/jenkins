@@ -1,10 +1,11 @@
 package job
 
 import (
-	"bytes"
 	"encoding/json"
 	"encoding/xml"
-	"io"
+	"fmt"
+	"net/url"
+	"strings"
 )
 
 // Info is a struct containing information about a jenkins job
@@ -204,7 +205,53 @@ type RunInfo struct {
 	} `json:"previousBuild"`
 }
 
+type Location struct {
+	Class   string `json:"_class"`
+	Actions []struct {
+		Class  string `json:"_class"`
+		Causes []struct {
+			Class            string `json:"_class"`
+			ShortDescription string `json:"shortDescription"`
+			UserID           string `json:"userId"`
+			UserName         string `json:"userName"`
+		} `json:"causes"`
+	} `json:"actions"`
+	Blocked      bool   `json:"blocked"`
+	Buildable    bool   `json:"buildable"`
+	ID           int    `json:"id"`
+	InQueueSince int64  `json:"inQueueSince"`
+	Params       string `json:"params"`
+	Stuck        bool   `json:"stuck"`
+	Task         struct {
+		Class string `json:"_class"`
+		Name  string `json:"name"`
+		URL   string `json:"url"`
+		Color string `json:"color"`
+	} `json:"task"`
+	URL        string      `json:"url"`
+	Why        interface{} `json:"why"`
+	Cancelled  bool        `json:"cancelled"`
+	Executable struct {
+		Class  string `json:"_class"`
+		Number int    `json:"number"`
+		URL    string `json:"url"`
+	} `json:"executable"`
+}
+
+type PendingInputActions []struct {
+	ID                  string        `json:"id"`
+	ProceedText         string        `json:"proceedText"`
+	Message             string        `json:"message"`
+	Inputs              []interface{} `json:"inputs"`
+	ProceedURL          string        `json:"proceedUrl"`
+	AbortURL            string        `json:"abortUrl"`
+	RedirectApprovalURL string        `json:"redirectApprovalUrl"`
+}
+
 // Config is a struct used for storing configuration about a jenkins job
+// Note: Depending on your plugins installed in your jenkins instance you will need
+// to define your own config struct such that your config.xml response can be unmarshalled.
+// It is recommended to use an online "XML to go struct" generator.
 type Config struct {
 	XMLName          xml.Name `xml:"flow-definition"`
 	Text             string   `xml:",chardata"`
@@ -330,18 +377,24 @@ type Parameter struct {
 	Value string `json:"value"`
 }
 
-// GetPostBody converts a Parameters struct into []byte to be used for sending requests
-// to Jenkins
-func (ps Parameters) GetPostBody() io.Reader {
+// GetURLEncodedJSON converts a Parameters struct into a url encoded "json" parameter
+func (ps Parameters) GetURLEncodedJSON() string {
 	reqBodyStruct := struct {
-		JSON struct {
-			Parameters Parameters `json:"parameter"`
-		} `json:"json"`
+		Parameters Parameters `json:"parameter"`
 	}{}
 
 	for _, p := range ps {
-		reqBodyStruct.JSON.Parameters = append(reqBodyStruct.JSON.Parameters, p)
+		reqBodyStruct.Parameters = append(reqBodyStruct.Parameters, p)
 	}
 	reqBodyBytes, _ := json.Marshal(reqBodyStruct)
-	return bytes.NewReader(reqBodyBytes)
+	return fmt.Sprintf("json=%s", url.QueryEscape(string(reqBodyBytes)))
+}
+
+// GetURLEncodedJSON converts a Parameters struct into a url encoded "json" parameter
+func (ps Parameters) GetURLBuildArgs() string {
+	urlArgs := []string{}
+	for _, p := range ps {
+		urlArgs = append(urlArgs, fmt.Sprintf("%s=%s", p.Name, url.QueryEscape(p.Value)))
+	}
+	return strings.Join(urlArgs, "&")
 }

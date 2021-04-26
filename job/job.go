@@ -2,15 +2,19 @@ package job
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/skipikash/jenkins"
 )
 
 var (
-	apiJSON      = "%s/api/json"
-	configXML    = "%s/config.xml"
-	apiBuild     = "%s/build"
-	apiPassInput = "%s/Input"
+	apiJSON                = "%s/api/json"
+	apiConfigXML           = "%s/config.xml"
+	apiBuild               = "%s/build"
+	apiBuildWithParams     = "%s/buildWithParameters?%s"
+	apiPassInput           = "%s/Input"
+	apiPendingInputActions = "%s/wfapi/pendingInputActions"
+	apiSubmitInput         = "%s/wfapi/inputSubmit?inputId=%s&proceed=%s&%s"
 )
 
 // GetInfo returns information about a job.
@@ -37,35 +41,86 @@ func GetRunInfo(r jenkins.Requester, jobRunURL string) (*RunInfo, error) {
 }
 
 // GetConfig returns configuration for a given job
+// Note: Depending on your plugins installed in your jenkins instance you will need
+// to define a configStruct such that the config.xml response can be unmarshalled. It is
+// recommended to use an online "XML to go struct" generator
 func GetConfig(r jenkins.Requester, jobURL string, configStruct interface{}) error {
-	url := fmt.Sprintf(configXML, jobURL)
+	url := fmt.Sprintf(apiConfigXML, jobURL)
 	return jenkins.RequestXML(r, "GET", url, nil, configStruct)
 }
 
-// Start starts a job and returns the run URL
+// Start starts a job, pauses so the jenkins queue populates data and returns the run URL
 func Start(r jenkins.Requester, params Parameters, jobURL string) (string, error) {
-	url := fmt.Sprintf(apiBuild, jobURL)
-	err := jenkins.RequestJSON(r, "POST", url, params.GetPostBody(), params)
+	var url string
+	if params == nil || len(params) == 0 {
+		// url for no parameters
+		url = fmt.Sprintf(apiBuild, jobURL)
+	} else {
+		// url for parameterized job
+		url = fmt.Sprintf(apiBuildWithParams, jobURL, params.GetURLBuildArgs())
+	}
+
+	// send request to start job
+	resp, err := r.Request("POST", url, nil)
 	if err != nil {
 		return "", err
 	}
-	jobRunURL := ""
-	// TODO: get jobURL from queue
+
+	// wait for queue to populate location data
+	time.Sleep(10 * time.Second)
+
+	// get runnning job URL
+	locationResp := Location{}
+	url = fmt.Sprintf(apiJSON, resp.Header.Get("Location"))
+	err = jenkins.RequestJSON(r, "GET", url, nil, &locationResp)
+	if err != nil {
+		return "", err
+	}
+	jobRunURL := locationResp.Executable.URL
+
+	// return running job url
 	return jobRunURL, err
 }
-
 
 // IsRequestingInput checks to see if a running job is requesting input
 func IsRequestingInput(r jenkins.Requester, jobRunURL string) bool {
 	// check to see if job is pendingInput
-	// if so, post input
-	return false
+	url := fmt.Sprintf(apiPendingInputActions, jobRunURL)
+	inputActions := PendingInputActions{}
+	err := jenkins.RequestJSON(r, "GET", url, nil, &inputActions)
+	if err != nil {
+		return false
+	}
+	return len(inputActions) > 0
 }
 
+// PassProceedInput passes input to a running job waiting for input
+func PassProceedInput(r jenkins.Requester, params Parameters, jobRunURL string) error {
+	// check to see if job is pendingInput
+	url := fmt.Sprintf(apiPendingInputActions, jobRunURL)
+	inputActions := PendingInputActions{}
+	err := jenkins.RequestJSON(r, "GET", url, nil, &inputActions)
+	if err != nil || len(inputActions) == 0 {
+		return fmt.Errorf("Job is not waiting for input")
+	}
 
-// PassInput passes input to a running job waiting for input
-func PassInput(r jenkins.Requester, jobRunURL string, input []byte) error {
-	// post input
+	// populate url
+	inputID := inputActions[0].ID
+	proceedText := inputActions[0].ProceedText
+	jsonInput := "json={}"
+	if params != nil && len(params) != 0 {
+		jsonInput = params.GetURLEncodedJSON()
+	}
+
+	// send request
+	url = fmt.Sprintf(apiSubmitInput, jobRunURL, inputID, proceedText, jsonInput)
+	resp, err := r.Request("POST", url, nil)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != 200 && resp.StatusCode != 201 {
+		return fmt.Errorf("%s status returned from passing proceed input", resp.Status)
+	}
+
 	return nil
 }
-

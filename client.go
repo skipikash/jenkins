@@ -4,10 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"encoding/xml"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
-	"strings"
 )
 
 // Requester defines an interface used for making requests to Jenkins
@@ -31,7 +31,8 @@ func RequestJSON(r Requester, method, url string, body io.Reader, responseStruct
 	if err != nil {
 		return err
 	}
-	return json.NewDecoder(res.Body).Decode(responseStruct)
+	defer res.Body.Close()
+	return json.NewDecoder(res.Body).Decode(&responseStruct)
 }
 
 // RequestXML makes a request to Jenkins and decodes the xml response into the responseStruct
@@ -40,6 +41,7 @@ func RequestXML(r Requester, method, url string, body io.Reader, responseStruct 
 	if err != nil {
 		return err
 	}
+	defer res.Body.Close()
 	return xml.NewDecoder(res.Body).Decode(responseStruct)
 }
 
@@ -59,22 +61,28 @@ func (c Client) Request(method, url string, body io.Reader) (*http.Response, err
 		c.JenkinsURL = os.Getenv("JENKINS_URL")
 	}
 
-	if !strings.Contains(url, c.JenkinsURL) {
-		url = c.JenkinsURL + url
-	}
-
 	// Create http.Request
 	req, err := http.NewRequestWithContext(c.Context, method, url, body)
 	if err != nil {
 		return nil, err
 	}
+	req.Close = true
 
 	// Set Basic Auth
 	req.SetBasicAuth(c.JenkinsUsername, c.JenkinsAPIToken)
 
 	// Set Headers
-	req.Header.Add("content-type", "application/json")
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Accept", "application/json")
 
 	//Perform request and return http.Response
-	return c.HTTPClient.Do(req)
+	res, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if res.StatusCode >= 400 {
+		return res, fmt.Errorf("%s returned from %s %s", res.Status, method, url)
+	}
+	return res, err
 }
