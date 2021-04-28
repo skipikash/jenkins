@@ -1,5 +1,5 @@
 # Jenkins Go Module
-![gopher jenkins](./logopic.png)
+![gopher jenkins](./logo.png)
 A third-party go module for empowering go developers to be able to easily interact with a given Jenkins instance API. 
 
 With a few short lines of code, kick off pipelines, stop pipelines, pass input to pipelines waiting for input, retrieve information about pipeline configuration and more!
