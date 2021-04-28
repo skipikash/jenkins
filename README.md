@@ -1,7 +1,7 @@
 # Jenkins Go Module
 
 <p align="center">
-  <img width="220" height="300" src="https://github.com/skipikash/jenkins/blob/main/logo.png?raw=true">
+  <img width="250" height="300" src="https://github.com/skipikash/jenkins/blob/main/logo.png?raw=true">
 </p>
 
 A third-party go module for empowering go developers to be able to easily interact with a given Jenkins instance API. 
