@@ -15,6 +15,7 @@ var (
 	apiPassInput           = "%s/Input"
 	apiPendingInputActions = "%s/wfapi/pendingInputActions"
 	apiSubmitInput         = "%s/wfapi/inputSubmit?inputId=%s&proceed=%s&%s"
+	apiStop                = "%s/stop"
 )
 
 // GetInfo returns information about a job.
@@ -80,6 +81,13 @@ func Start(r jenkins.Requester, params Parameters, jobURL string) (string, error
 
 	// return running job url
 	return jobRunURL, err
+}
+
+// Abort aborts a job
+func Abort(r jenkins.Requester, jobRunURL string) error {
+	url := fmt.Sprintf(apiStop, jobRunURL)
+	_, err := r.Request("POST", url, nil)	
+	return err
 }
 
 // GetInputRequest gets input requests when job is pending input
