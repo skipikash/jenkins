@@ -1,6 +1,6 @@
 # Jenkins Go Module
 
-![gopher jenkins](./logo.png)
+<p align="center"><src="./logo.png"></p>
 
 A third-party go module for empowering go developers to be able to easily interact with a given Jenkins instance API. 
 
