@@ -13,7 +13,7 @@
   </a>
 </p>
 
-A third-party go module for empowering go developers to be able to easily interact with a given Jenkins instance API. 
+A third-party go module for empowering go developers to be able to easily interact with the Jenkins API. 
 
 With a few short lines of code, kick off pipelines, stop pipelines, pass input to pipelines waiting for input, retrieve information about pipeline configuration and more!
 
