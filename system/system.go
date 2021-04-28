@@ -1,3 +1,3 @@
 package system
 
-// TODO: Add functionality for managing system
+// TODO: Add functionality for managing jenkins system

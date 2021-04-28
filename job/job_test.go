@@ -21,41 +21,46 @@ func TestGetInfo(t *testing.T) {
 func TestGetRunInfo(t *testing.T) {
 	r := mock.Client
 
-	// Test for Running Job
-	actual, err := job.GetRunInfo(r, mock.TestRunningJobURL)
-	if err != nil {
-		t.Error(err)
-	}
-	if actual.Result != "RUNNING" {
-		t.Fail()
-	}
+	t.Run("Test for Running Job", func(t *testing.T) {
+		actual, err := job.GetRunInfo(r, mock.TestRunningJobURL)
+		if err != nil {
+			t.Error(err)
+		}
+		if actual.Result != "RUNNING" {
+			t.Fail()
+		}
+	})
 
-	// Test for Successful Job
-	actual, err = job.GetRunInfo(r, mock.TestSuccessJobURL)
-	if err != nil {
-		t.Error(err)
-	}
-	if actual.Result != "SUCCESS" {
-		t.Fail()
-	}
+	t.Run("Test for Successful Job", func(t *testing.T) {
+		actual, err := job.GetRunInfo(r, mock.TestSuccessJobURL)
+		if err != nil {
+			t.Error(err)
+		}
+		if actual.Result != "SUCCESS" {
+			t.Fail()
+		}
+	})
 
-	// Test for Failed Job
-	actual, err = job.GetRunInfo(r, mock.TestFailureJobURL)
-	if err != nil {
-		t.Error(err)
-	}
-	if actual.Result != "FAILURE" {
-		t.Fail()
-	}
+	t.Run("Test for Failed Job", func(t *testing.T) {
+		actual, err := job.GetRunInfo(r, mock.TestFailureJobURL)
+		if err != nil {
+			t.Error(err)
+		}
+		if actual.Result != "FAILURE" {
+			t.Fail()
+		}
+	})
 
-	// Test for Aborted Job
-	actual, err = job.GetRunInfo(r, mock.TestAbortedJobURL)
-	if err != nil {
-		t.Error(err)
-	}
-	if actual.Result != "ABORTED" {
-		t.Fail()
-	}
+	t.Run("Test for Aborted Job", func(t *testing.T) {
+		actual, err := job.GetRunInfo(r, mock.TestAbortedJobURL)
+		if err != nil {
+			t.Error(err)
+		}
+		if actual.Result != "ABORTED" {
+			t.Fail()
+		}
+	})
+
 }
 
 func TestGetConfig(t *testing.T) {
@@ -72,30 +77,32 @@ func TestGetConfig(t *testing.T) {
 
 func TestStart(t *testing.T) {
 	r := mock.Client
-	params := job.Parameters{
-		job.Parameter{
-			Name:  "GREETING",
-			Value: "Hello World",
-		},
-	}
 
-	// Test parameterized job
-	runningJob, err := job.Start(r, params, mock.TestJobURL)
-	if err != nil {
-		t.Error(err)
-	}
-	if runningJob != mock.TestRunningJobURL {
-		t.Fail()
-	}
+	t.Run("Test for Parameterized Job", func(t *testing.T) {
+		params := job.Parameters{
+			job.Parameter{
+				Name:  "GREETING",
+				Value: "Hello World",
+			},
+		}
+		runningJob, err := job.Start(r, params, mock.TestJobURL)
+		if err != nil {
+			t.Error(err)
+		}
+		if runningJob != mock.TestRunningJobURL {
+			t.Fail()
+		}
+	})
 
-	// Test for no parameters
-	runningJob, err = job.Start(r, nil, mock.TestJobURL)
-	if err != nil {
-		t.Error(err)
-	}
-	if runningJob != mock.TestRunningJobURL {
-		t.Fail()
-	}
+	t.Run("Test for no Parameters", func(t *testing.T) {
+		runningJob, err := job.Start(r, nil, mock.TestJobURL)
+		if err != nil {
+			t.Error(err)
+		}
+		if runningJob != mock.TestRunningJobURL {
+			t.Fail()
+		}
+	})
 }
 
 func TestGetInputRequest(t *testing.T) {
