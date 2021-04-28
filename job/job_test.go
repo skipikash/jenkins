@@ -105,6 +105,12 @@ func TestStart(t *testing.T) {
 	})
 }
 
+func TestAbort(t *testing.T) {
+	if err := job.Abort(mock.Client, mock.TestRunningJobURL); err != nil {
+		t.Error(err)
+	}
+}
+
 func TestGetInputRequest(t *testing.T) {
 	r := mock.Client
 	inputActions, err := job.GetInputRequest(r, mock.TestPendingInputJobURL)

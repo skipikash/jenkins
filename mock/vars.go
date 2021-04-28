@@ -22,8 +22,10 @@ var (
 	submitInputPath     = "/job/%s/%d/wfapi/inputSubmit"
 	runningLocationPath = "/queue/item/61/api/json"
 	runningLocationURL  = testJenkinsURL + "/queue/item/61"
+	stopPipeline        = "/job/%s/%d/stop"
 
 	testJobURLPath                  = fmt.Sprintf(jobJSONPath, testJobName)
+	testStopRunningPipelineURLPath  = fmt.Sprintf(stopPipeline, testJobName, 4)
 	testRunningPipelineURLPath      = fmt.Sprintf(runJSONPath, testJobName, 4)
 	testSuccessPipelineURLPath      = fmt.Sprintf(runJSONPath, testJobName, 5)
 	testFailurePipelineURLPath      = fmt.Sprintf(runJSONPath, testJobName, 6)
@@ -116,6 +118,12 @@ var (
 
 	submitInputResponseKey = fmt.Sprintf(keyFmt, "POST", testSubmitInputURLPath)
 	submitInputResponse    = Response{
+		StatusCode: 200,
+		Status:     "200 OK",
+	}
+
+	abortResponseKey = fmt.Sprintf(keyFmt, "POST", testStopRunningPipelineURLPath)
+	abortResponse    = Response{
 		StatusCode: 200,
 		Status:     "200 OK",
 	}

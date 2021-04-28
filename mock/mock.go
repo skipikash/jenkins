@@ -57,6 +57,7 @@ var MockTransport = &RequestMocker{
 		queueLocationInfoResponseKey:    queueLocationInfoResponse,
 		pendingInputPipelineResponseKey: pendingInputPipelineResponse,
 		submitInputResponseKey:          submitInputResponse,
+		abortResponseKey:                abortResponse,
 	},
 }
 
