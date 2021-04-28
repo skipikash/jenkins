@@ -5,7 +5,12 @@
 </p>
 
 <p align="center">
-  <img width="80" src="https://goreportcard.com/badge/github.com/skipikash/jenkins">
+  <a>
+      <img src="https://goreportcard.com/badge/github.com/skipikash/jenkins" />
+  </a>
+  <a>
+      <img src="https://github.com/skipikash/jenkins/actions/workflows/go.yml/badge.svg?branch=main" />
+  </a>
 </p>
 
 A third-party go module for empowering go developers to be able to easily interact with a given Jenkins instance API. 
